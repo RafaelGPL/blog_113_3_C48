@@ -55,9 +55,21 @@ class ArchivedPostListView(LoginRequiredMixin, ListView):
         )
         return context
 
-class PostDetailView(DetailView):
+class PostDetailView(UserPassesTestMixin, DetailView):
     template_name = "posts/detail.html"
     model = Post
+
+    def test_func(self):
+        post = self.get_object()
+        if post.status.name == "archived":
+            if self.request.user.is_authenticated:
+                return True
+        elif post.status.name == "draft":
+            if self.request.user.is_authenticated:
+                return self.request.user == post.author
+            return False
+        else:
+            return True
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     template_name = "posts/new.html"
